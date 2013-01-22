@@ -2,11 +2,13 @@ from django.db.backends.postgresql_psycopg2.base import DatabaseOperations
 from django_chem.db.backends.base import BaseChemOperations
 from django_chem.db.backends.util import ChemOperation, ChemFunction
 
-#### Classes used in constructing RDKit chemical SQL ####
+
+#### Classes used in constructing RDKit chemical SQL ##
 class RDKitOperator(ChemOperation):
     "For RDKit operators (e.g. `@>`, `<@`, `#`, `%`, ...)."
     def __init__(self, operator):
         super(RDKitOperator, self).__init__(operator=operator)
+
 
 class RDKitFunction(ChemFunction):
     "For RDKit function calls (e.g., ``)."
@@ -24,11 +26,13 @@ class RDKitOperations(DatabaseOperations, BaseChemOperations):
         super(RDKitOperations, self).__init__(connection)
 
         self.structure_operators = {
-            'contains'  : (RDKitOperator('@>'), '%s::mol'),
-            'contained' : (RDKitOperator('<@'), '%s::mol'),
-            'exact'     : (RDKitOperator('@='), '%s::mol'),
-            'matches'   : (RDKitOperator('@>'), '%s::qmol'),
-            }
+            'contains': (RDKitOperator('@>'), '%s::mol'),
+            'contained': (RDKitOperator('<@'), '%s::mol'),
+            'exact': (RDKitOperator('@='), '%s::mol'),
+            'matches': (RDKitOperator('@>'), '%s::qmol'),
+            'similar': (RDKitOperator('%'),  '%s::mol'),
+            'dice_similar': (RDKitOperator('#'),  '%s::mol'),
+        }
 
         # Creating a dictionary lookup of all chem terms for the RDKit backend.
         chem_terms = ['isnull']
@@ -38,10 +42,12 @@ class RDKitOperations(DatabaseOperations, BaseChemOperations):
     def chem_db_type(self, field_name):
         try:
             return {
-                'MoleculeField':     'mol',
+                'MoleculeField':          'mol',
+                'BitFingerprintField':    'bfp',
+                'SparseFingerprintField': 'sfp',
                 }[field_name]
         except KeyError:
-            raise NotImplementedError('%s is not implemented for this backend.' 
+            raise NotImplementedError('%s is not implemented for this backend.'
                                       % field_name)
 
     def get_chem_placeholder(self, value, field):
@@ -71,6 +77,7 @@ class RDKitOperations(DatabaseOperations, BaseChemOperations):
     def _build_molecular_descriptor_query(self, func):
         cursor = self.connection.cursor()
         sql = 'SELECT %s(%%s::mol)' % func
+
         def molecular_descriptor_query(molecule):
             # Data retrieval operation - no commit required
             cursor.execute(sql, [molecule])
@@ -81,7 +88,7 @@ class RDKitOperations(DatabaseOperations, BaseChemOperations):
         from django_chem.db.models.fields import \
             MolecularWeightField, LogpField, NumberOfAtomsField, \
             NumberOfHeavyAtomsField, NumberOfHbaField, NumberOfHbdField
-        
+
         if isinstance(f, MolecularWeightField):
             return self._build_molecular_descriptor_query('mol_amw')
         if isinstance(f, LogpField):
@@ -94,6 +101,5 @@ class RDKitOperations(DatabaseOperations, BaseChemOperations):
             return self._build_molecular_descriptor_query('mol_hba')
         if isinstance(f, NumberOfHbdField):
             return self._build_molecular_descriptor_query('mol_hbd')
-        
-        raise NotImplementedError('Computation of descriptor field not implemented for this chemical backend.')
 
+        raise NotImplementedError('Computation of descriptor field not implemented for this chemical backend.')

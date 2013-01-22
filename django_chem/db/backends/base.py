@@ -55,5 +55,4 @@ class BaseChemOperations(object):
         raise NotImplementedError('Aggregate support not implemented for this chemical backend.')
 
     def chem_lookup_sql(self, lvalue, lookup_type, value, field):
-        raise NotImplmentedError
-
+        raise NotImplementedError('Chem Lookup support not implemented for this chemical backend.')

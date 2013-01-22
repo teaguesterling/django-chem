@@ -1,31 +1,33 @@
 import sys
 from django.utils.translation import ugettext_lazy as _
 from django.db import connections, router
-from django.db.models import SubfieldBase
 from django.db.models import Model as _DjangoModel
 from django.db.models import ForeignKey as _ForeignKey
 from django.db.models import DO_NOTHING as _DO_NOTHING
 from django.db.models.fields import *
 from django.db.models.sql.expressions import SQLEvaluator
 
+
 # connection retrival code for auto-computed descriptor fields
 # that require access to the db backend from pre_save()
 def _connection(model_instance):
-    using = router.db_for_write(model_instance.__class__, 
+    using = router.db_for_write(model_instance.__class__,
                                 instance=model_instance)
     return connections[using]
-    
+
+
 class ChemField(Field):
 
     def get_placeholder(self, value, connection):
         return connection.ops.get_chem_placeholder(value, self)
+
 
 class _MoleculeSignatureField(ChemField):
     """
     Binary signature of a molecular structure. Only used by the ChemicaLite
     backend for structural indexing and lookup ops.
     """
-    
+
     def __init__(self, verbose_name=None, **kwargs):
         super(_MoleculeSignatureField, self).__init__(**kwargs)
         self.chem_index = False
@@ -45,7 +47,7 @@ class _MoleculeSignatureField(ChemField):
     def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
         """
         Prepare for the database lookup, and return any parameters
-        necessary for the query. 
+        necessary for the query.
         """
         if not prepared:
             value = self.get_prep_lookup(lookup_type, value)
@@ -57,10 +59,11 @@ class _MoleculeSignatureField(ChemField):
             elif isinstance(value, (tuple, list)):
                 return value
             else:
-                return [value,]
+                return [value]
         else:
             raise ValueError('%s is not a valid chem lookup for %s.' %
                              (lookup_type, self.__class__.__name__))
+
 
 class MoleculeField(ChemField):
     "The Molecule data type -- represents the chemical structure of a compound"
@@ -92,38 +95,39 @@ class MoleculeField(ChemField):
     def contribute_to_class(self, cls, name):
         super(MoleculeField, self).contribute_to_class(cls, name)
         if self.chem_index:
-            index_model_name = ('StrIdx%s%s' % 
-                                (cls._meta.object_name, 
-                                 self.name[0].upper()+self.name[1:]))
+            index_model_name = ('StrIdx%s%s' %
+                                (cls._meta.object_name,
+                                 self.name[0].upper() + self.name[1:]))
             module = sys.modules[cls.__module__]
             if index_model_name not in dir(module):
                 self.stridx_attname = 'stridx_%s' % self.attname
                 bases = (_DjangoModel,)
+
                 class Meta:
                     app_label = cls._meta.app_label
-                    db_table = ('str_idx_%s_%s' % 
+                    db_table = ('str_idx_%s_%s' %
                                 (cls._meta.db_table, self.column))
                     db_tablespace = cls._meta.db_tablespace
                     managed = False
                 attrs = {
-                    '__module__' : cls.__module__,
-                    'Meta' : Meta,
-                    'structure' : 
-                    _ForeignKey(cls._meta.object_name,
-                                db_column='id', # instead of structure_id
-                                related_name=self.stridx_attname,
-                                on_delete=_DO_NOTHING # triggers exist 
-                                ),
-                    's' : _MoleculeSignatureField()
+                    '__module__': cls.__module__,
+                    'Meta': Meta,
+                    'structure':
+                        _ForeignKey(cls._meta.object_name,
+                                    db_column='id',  # instead of structure_id
+                                    related_name=self.stridx_attname,
+                                    on_delete=_DO_NOTHING  # triggers exist
+                        ),
+                    's': _MoleculeSignatureField()
                     }
-                
-                setattr(module, index_model_name, 
+
+                setattr(module, index_model_name,
                         type(index_model_name, bases, attrs))
 
     def get_db_prep_lookup(self, lookup_type, value, connection, prepared=False):
         """
         Prepare for the database lookup, and return any parameters
-        necessary for the query. 
+        necessary for the query.
         """
         if lookup_type in connection.ops.chem_terms:
             # special case for isnull lookup
@@ -133,7 +137,7 @@ class MoleculeField(ChemField):
             elif isinstance(value, (tuple, list)):
                 return value
             else:
-                return [value,]
+                return [value]
 
             # but the following is the more sophisticated version from geodjango
 
@@ -142,12 +146,12 @@ class MoleculeField(ChemField):
             # with the Adapter of the spatial backend. (what's this?)
             if isinstance(value, (tuple, list)):
                 params = [connection.ops.Adapter(value[0])]
-                if 0: #lookup_type in connection.ops.distance_functions:
-                    # Getting the distance parameter in the units of the field.
+                if 0:  # lookup_type in connection.ops.distance_functions:
+                       # Getting the distance parameter in the units of the field.
                     params += self.get_distance(value[1:], lookup_type, connection)
-                elif 0: #lookup_type in connection.ops.truncate_params:
-                    # Lookup is one where SQL parameters aren't needed from the
-                    # given lookup value.
+                elif 0:  # lookup_type in connection.ops.truncate_params:
+                         # Lookup is one where SQL parameters aren't needed from the
+                         # given lookup value.
                     pass
                 else:
                     params += value[1:]
@@ -172,7 +176,7 @@ class MoleculeField(ChemField):
 
 
 class _MolecularDescriptorField(Field):
-    
+
     def __init__(self, molecule, **kwargs):
         self.molecule_attname = molecule
 
@@ -240,12 +244,16 @@ class NumberOfHbdField(_MolecularDescriptorField, IntegerField):
     description = _('The number of hydrogen bond donors in the associated molecule')
 
 
+# TODO: Implement this
 class FingerprintField(ChemField):
     pass
 
+
+# TODO: Implement this
 class BitmapFingerprintField(FingerprintField):
     pass
 
+
+# TODO: Implement this
 class SparseFingerprintField(FingerprintField):
     pass
-

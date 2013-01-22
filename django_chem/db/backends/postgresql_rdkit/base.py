@@ -4,6 +4,7 @@ from django_chem.db.backends.postgresql_rdkit.creation import RDKitCreation
 from django_chem.db.backends.postgresql_rdkit.introspection import RDKitIntrospection
 from django_chem.db.backends.postgresql_rdkit.operations import RDKitOperations
 
+
 class DatabaseWrapper(Psycopg2DatabaseWrapper):
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)

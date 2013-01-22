@@ -1,5 +1,6 @@
 from django.db.backends.postgresql.creation import DatabaseCreation
 
+
 class RDKitCreation(DatabaseCreation):
 
     def sql_indexes_for_field(self, model, f, style):
@@ -7,7 +8,7 @@ class RDKitCreation(DatabaseCreation):
 
         from django_chem.db.models.fields import ChemField
 
-        output = super(RDKitCreation, self).sql_indexes_for_field(model, 
+        output = super(RDKitCreation, self).sql_indexes_for_field(model,
                                                                   f, style)
 
         if isinstance(f, ChemField) and f.chem_index:
@@ -15,7 +16,7 @@ class RDKitCreation(DatabaseCreation):
             db_table = model._meta.db_table
 
             output.append(style.SQL_KEYWORD('CREATE INDEX ') +
-                          style.SQL_TABLE(qn('%s_%s_gist_idx' % 
+                          style.SQL_TABLE(qn('%s_%s_gist_idx' %
                                              (db_table, f.column))) +
                           style.SQL_KEYWORD(' ON ') +
                           style.SQL_TABLE(qn(db_table)) +

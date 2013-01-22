@@ -1,4 +1,5 @@
 
+
 class ChemOperation(object):
     """
     Base class for generating chemical SQL.
@@ -15,14 +16,15 @@ class ChemOperation(object):
         return self.sql_template % self.params(chem_col, chemical)
 
     def params(self, chem_col, chemical):
-        params = {'function' : self.function,
-                  'chem_col' : chem_col,
-                  'chemical' : chemical,
-                  'operator' : self.operator,
-                  'result' : self.result,
-                  }
+        params = {'function': self.function,
+                  'chem_col': chem_col,
+                  'chemical': chemical,
+                  'operator': self.operator,
+                  'result': self.result,
+        }
         params.update(self.extra)
         return params
+
 
 class ChemFunction(ChemOperation):
     """
@@ -32,10 +34,9 @@ class ChemFunction(ChemOperation):
 
     def __init__(self, func, result='', operator='', **kwargs):
         # Getting the function prefix.
-        default = {'function' : func,
-                   'operator' : operator,
-                   'result' : result
-                   }
+        default = {'function': func,
+                   'operator': operator,
+                   'result': result
+        }
         kwargs.update(default)
         super(ChemFunction, self).__init__(**kwargs)
-

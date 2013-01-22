@@ -2,6 +2,7 @@ from django.db.backends.sqlite3.base import DatabaseOperations
 from django_chem.db.backends.base import BaseChemOperations
 from django_chem.db.backends.util import ChemOperation, ChemFunction
 
+
 class ChemicaLiteOperator(ChemOperation):
     "For ChemicaLite lookup operators (e.g. contains, contained_in, ...)."
 
@@ -10,19 +11,22 @@ class ChemicaLiteOperator(ChemOperation):
     def __init__(self, function):
         super(ChemicaLiteOperator, self).__init__(function=function)
 
+
 class ChemicaLiteSignOperator(ChemOperation):
     "For ChemicaLite signature lookup operators."
 
     def __init__(self, operator):
         super(ChemicaLiteSignOperator, self).__init__(operator=operator)
 
+
 class ChemicaLiteFunction(ChemFunction):
     "For ChemicaLite function calls."
     def __init__(self, function, **kwargs):
         super(ChemicaLiteFunction, self).__init__(function, **kwargs)
 
+
 class ChemicaLiteOperations(DatabaseOperations, BaseChemOperations):
-    
+
     chemicalite = True
 
     compiler_module = 'django_chem.db.models.sql.compiler'
@@ -34,39 +38,39 @@ class ChemicaLiteOperations(DatabaseOperations, BaseChemOperations):
         self.connection = connection
 
         self.stridx_lookup = {
-            'contains'  : 's__signcontains',
-            'contained' : 's__signcontained',
-            'exact'     : 's__signexact',
-            'matches'   : 's__signmatches',
-            }
+            'contains': 's__signcontains',
+            'contained': 's__signcontained',
+            'exact': 's__signexact',
+            'matches': 's__signmatches',
+        }
 
         self.structure_operators = {
-            'contains'  : (ChemicaLiteOperator('mol_is_substruct'), 'mol(%s)'),
-            'contained' : (ChemicaLiteOperator('mol_substruct_of'), 'mol(%s)'),
-            'exact'     : (ChemicaLiteOperator('mol_same'), 'mol(%s)'),
-            'matches'   : (ChemicaLiteOperator('mol_is_substruct'), 'qmol(%s)'),
-            'signcontains'  : (ChemicaLiteSignOperator('>='), 
+            'contains': (ChemicaLiteOperator('mol_is_substruct'), 'mol(%s)'),
+            'contained': (ChemicaLiteOperator('mol_substruct_of'), 'mol(%s)'),
+            'exact': (ChemicaLiteOperator('mol_same'), 'mol(%s)'),
+            'matches': (ChemicaLiteOperator('mol_is_substruct'), 'qmol(%s)'),
+            'signcontains': (ChemicaLiteSignOperator('>='),
                                'mol_signature(mol(%s))'),
-            'signcontained' : (ChemicaLiteSignOperator('<='), 
+            'signcontained': (ChemicaLiteSignOperator('<='),
                                'mol_signature(mol(%s))'),
-            'signexact'     : (ChemicaLiteSignOperator('=='), 
+            'signexact': (ChemicaLiteSignOperator('=='),
                                'mol_signature(mol(%s))'),
-            'signmatches'   : (ChemicaLiteSignOperator('>='), 
+            'signmatches': (ChemicaLiteSignOperator('>='),
                               'mol_signature(qmol(%s))'),
-            }
+        }
 
         # Creating a dictionary lookup of all chem terms for the RDKit backend.
         chem_terms = ['isnull']
         chem_terms += self.structure_operators.keys()
         self.chem_terms = dict([(term, None) for term in chem_terms])
-        
+
     def chem_db_type(self, field_name):
         try:
             return {
                 'MoleculeField':     'molecule',
                 }[field_name]
         except KeyError:
-            raise NotImplementedError('%s is not implemented for this backend.' 
+            raise NotImplementedError('%s is not implemented for this backend.'
                                       % field_name)
 
     def get_chem_placeholder(self, value, field):
@@ -75,9 +79,9 @@ class ChemicaLiteOperations(DatabaseOperations, BaseChemOperations):
             if hasattr(value, 'expression'):
                 # No chem value used for F expression, substitute in
                 # the column name instead.
-                return ( placeholder % '%s.%s' % 
-                         tuple(map(self.quote_name, 
-                                   value.cols[value.expression])) )
+                return (placeholder % '%s.%s' %
+                        tuple(map(self.quote_name,
+                                  value.cols[value.expression])))
             else:
                 return placeholder
         else:

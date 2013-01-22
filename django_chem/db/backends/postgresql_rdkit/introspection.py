@@ -1,7 +1,9 @@
 from django.db.backends.postgresql_psycopg2.introspection import DatabaseIntrospection
 
+
 class ChemIntrospectionError(Exception):
     pass
+
 
 class RDKitIntrospection(DatabaseIntrospection):
     # Reverse dictionary for RDKit types not populated until
@@ -22,7 +24,7 @@ class RDKitIntrospection(DatabaseIntrospection):
         try:
             cursor.execute(oid_sql, ('mol',))
             MOL_TYPE = cursor.fetchone()[0]
-            rdkit_types = { MOL_TYPE : 'MoleculeField' }
+            rdkit_types = {MOL_TYPE: 'MoleculeField'}
         finally:
             cursor.close()
 

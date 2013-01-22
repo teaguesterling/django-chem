@@ -11,6 +11,7 @@ from django_chem.db.backends.chemicalite.introspection \
     import ChemicaLiteIntrospection
 from django_chem.db.backends.chemicalite.operations import ChemicaLiteOperations
 
+
 class DatabaseWrapper(SqliteDatabaseWrapper):
     def __init__(self, *args, **kwargs):
         # Before we get too far, make sure pysqlite 2.5+ is installed.
@@ -18,13 +19,13 @@ class DatabaseWrapper(SqliteDatabaseWrapper):
             raise ImproperlyConfigured('Only versions of pysqlite 2.5+ are '
                                        'compatible with ChemicaLite.')
 
-        # Trying to find the location of the ChemicaLite and SignTree 
+        # Trying to find the location of the ChemicaLite and SignTree
         # libraries.
         # Here we are figuring out the path to the ChemicaLite libraries
-        # (`libsigntree` and `libchemicalite`). 
-        # If it's not in the system library path (e.g., it cannot be found 
-        # by `ctypes.util.find_library`), then it may be set manually in the 
-        # settings via the `SIGNTREE_LIBRARY_PATH` and 
+        # (`libsigntree` and `libchemicalite`).
+        # If it's not in the system library path (e.g., it cannot be found
+        # by `ctypes.util.find_library`), then it may be set manually in the
+        # settings via the `SIGNTREE_LIBRARY_PATH` and
         # `CHEMICALITE_LIBRARY_PATH` settings.
         self.signtree_lib = getattr(settings, 'SIGNTREE_LIBRARY_PATH',
                                     find_library('signtree'))
@@ -59,15 +60,15 @@ class DatabaseWrapper(SqliteDatabaseWrapper):
                                            "using the database.")
             kwargs = {
                 'database': settings_dict['NAME'],
-                'detect_types': (Database.PARSE_DECLTYPES | 
+                'detect_types': (Database.PARSE_DECLTYPES |
                                  Database.PARSE_COLNAMES),
             }
             kwargs.update(settings_dict['OPTIONS'])
             self.connection = Database.connect(**kwargs)
             # Register extract, date_trunc, and regexp functions.
-            self.connection.create_function("django_extract", 2, 
+            self.connection.create_function("django_extract", 2,
                                             _sqlite_extract)
-            self.connection.create_function("django_date_trunc", 2, 
+            self.connection.create_function("django_date_trunc", 2,
                                             _sqlite_date_trunc)
             self.connection.create_function("regexp", 2, _sqlite_regexp)
             connection_created.send(sender=self.__class__, connection=self)
@@ -85,7 +86,7 @@ class DatabaseWrapper(SqliteDatabaseWrapper):
                                            'of extensions to use ChemicaLite.'
                                            )
 
-            # Loading the ChemicaLite library extensions on the connection, 
+            # Loading the ChemicaLite library extensions on the connection,
             # and returning the created cursor.
             cur = self.connection.cursor(factory=SQLiteCursorWrapper)
             try:
@@ -95,11 +96,11 @@ class DatabaseWrapper(SqliteDatabaseWrapper):
                                            'library extension "%s" because: %s'
                                            % (self.signtree_lib, msg))
             try:
-                cur.execute("SELECT load_extension(%s)", 
+                cur.execute("SELECT load_extension(%s)",
                             (self.chemicalite_lib,))
             except Exception, msg:
                 raise ImproperlyConfigured('Unable to load the ChemicaLite '
-                                           'library extension "%s" because: %s' 
+                                           'library extension "%s" because: %s'
                                            % (self.chemicalite_lib, msg))
             return cur
         else:
