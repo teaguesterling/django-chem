@@ -28,7 +28,7 @@ class RDKitIntrospection(DatabaseIntrospection):
         finally:
             cursor.close()
 
-        return postgis_types
+        return rdkit_types
 
     def get_field_type(self, data_type, description):
         if not self.rdkit_types_reverse:

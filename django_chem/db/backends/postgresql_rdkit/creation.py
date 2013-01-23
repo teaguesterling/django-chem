@@ -1,4 +1,4 @@
-from django.db.backends.postgresql.creation import DatabaseCreation
+from django.db.backends.postgresql_psycopg2.creation import DatabaseCreation
 
 
 class RDKitCreation(DatabaseCreation):
